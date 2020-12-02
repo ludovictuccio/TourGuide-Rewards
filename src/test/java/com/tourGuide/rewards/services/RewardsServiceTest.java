@@ -3,6 +3,9 @@ package com.tourGuide.rewards.services;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,6 +16,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 
+import com.tourGuide.rewards.domain.Location;
+import com.tourGuide.rewards.domain.UserReward;
+import com.tourGuide.rewards.domain.VisitedLocation;
+import com.tourGuide.rewards.domain.dto.AttractionDto;
+import com.tourGuide.rewards.domain.dto.UserRewardsDto;
+import com.tourGuide.rewards.proxies.MicroserviceGpsProxy;
+import com.tourGuide.rewards.proxies.MicroserviceUserProxy;
+import com.tourGuide.rewards.util.DistanceCalculator;
+
 import rewardCentral.RewardCentral;
 
 @SpringBootTest
@@ -22,15 +34,182 @@ public class RewardsServiceTest {
     public IRewardsService rewardsService;
 
     @MockBean
+    private DistanceCalculator distanceCalculator;
+
+    @MockBean
     private RewardCentral rewardCentral;
+
+    @MockBean
+    private MicroserviceGpsProxy microserviceGpsProxy;
+
+    @MockBean
+    private MicroserviceUserProxy microserviceUserProxy;
+
+    private List<VisitedLocation> visitedLocationsList;
+    private List<UserReward> userRewardsList;
+    private List<AttractionDto> attractionsDtoList;
 
     private UUID attractionUUID;
     private UUID userUUID;
+
+    private VisitedLocation visitedLocation;
+
+    private Location location;
+
+    private AttractionDto attractionDto;
 
     @BeforeEach
     public void setUpPerTest() {
         attractionUUID = UUID.randomUUID();
         userUUID = UUID.randomUUID();
+        location = new Location(48.858331, 2.294481);
+
+        visitedLocationsList = new ArrayList<>();
+        visitedLocation = new VisitedLocation(UUID.randomUUID(), location,
+                new Date());
+        visitedLocationsList.add(visitedLocation);
+
+        userRewardsList = new ArrayList<>();
+
+        attractionsDtoList = new ArrayList<>();
+        attractionDto = new AttractionDto("Tour Eiffel", location, "Paris",
+                "France", UUID.randomUUID());
+        attractionsDtoList.add(attractionDto);
+    }
+
+    @Test
+    @Tag("CalculateRewards")
+    @DisplayName("Calculate Rewards - Ok")
+    public void givenUserWithVisitedLocation_whencalculateRewardsWithAttractionInTheSameLocation_thenReturnUserRewardsAdded() {
+        // GIVEN
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
+                visitedLocationsList, userRewardsList);
+
+        when(microserviceUserProxy.getUserRewardsDto("userTest"))
+                .thenReturn(user);
+        when(microserviceGpsProxy.getAllAttractions())
+                .thenReturn(attractionsDtoList);
+        when(distanceCalculator.isNearAttraction(visitedLocation,
+                attractionDto)).thenReturn(true);
+
+        assertThat(user.getUserRewards().size()).isEqualTo(0);
+        // WHEN
+        rewardsService.calculateRewards("userTest");
+
+        // THEN
+        assertThat(user.getUserRewards().size()).isEqualTo(1);
+    }
+
+//    @Test
+//    @Tag("CalculateRewards")
+//    @DisplayName("Calculate Rewards - Error - Same attractions")
+//    public void aaaa() {
+//        // GIVEN
+//        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
+//                visitedLocationsList, userRewardsList);
+//
+//        VisitedLocation visitedLocation = new VisitedLocation(user.getUserId(),
+//                new Location(48.858331, 2.294481), new Date());
+//        AttractionDto attraction = new AttractionDto("Tour Eiffel",
+//                new Location(48.858331, 2.294481), "Paris", "France",
+//                UUID.randomUUID());
+//
+//        UserReward userReward = new UserReward(visitedLocation, attraction);
+//        userReward.setRewardPoints(100);
+//        user.addUserReward(userReward);
+//
+//        UserReward userReward2 = new UserReward(visitedLocation, attraction);
+//        userReward2.setRewardPoints(100);
+//        user.addUserReward(userReward2);
+//
+//        when(microserviceUserProxy.getUserRewardsDto("userTest"))
+//                .thenReturn(user);
+////        when(microserviceGpsProxy.getAllAttractions())
+////                .thenReturn(attractionsDtoList);
+//        when(distanceCalculator.isNearAttraction(visitedLocation, attraction))
+//                .thenReturn(true);
+//
+//        // WHEN
+//        rewardsService.calculateRewards("userTest");
+//
+//        // THEN
+//        assertThat(user.getUserRewards().size()).isEqualTo(1);
+//        assertThat(user.getUserRewards().get(0).getRewardPoints())
+//                .isEqualTo(100);
+//    }
+
+    @Test
+    @Tag("CalculateRewards")
+    @DisplayName("Calculate Rewards - Ok - Differents attractions")
+    public void aaaaa() {
+        // GIVEN
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
+                visitedLocationsList, userRewardsList);
+
+        VisitedLocation visitedLocation = new VisitedLocation(user.getUserId(),
+                new Location(48.858331, 2.294481), new Date());
+        AttractionDto attraction = new AttractionDto("Tour Eiffel",
+                new Location(48.858331, 2.294481), "Paris", "France",
+                UUID.randomUUID());
+
+        VisitedLocation visitedLocation2 = new VisitedLocation(user.getUserId(),
+                new Location(43.295364, 5.37439), new Date());
+        AttractionDto attraction2 = new AttractionDto("Vieux-Port de Marseille",
+                new Location(43.295364, 5.37439), "Marseille", "France",
+                UUID.randomUUID());
+
+        UserReward userReward = new UserReward(visitedLocation, attraction);
+        userReward.setRewardPoints(100);
+        user.addUserReward(userReward);
+
+        UserReward userReward2 = new UserReward(visitedLocation2, attraction2);
+        userReward2.setRewardPoints(80);
+        user.addUserReward(userReward2);
+
+        when(microserviceUserProxy.getUserRewardsDto("userTest"))
+                .thenReturn(user);
+        when(distanceCalculator.isNearAttraction(visitedLocation, attraction))
+                .thenReturn(true);
+        when(distanceCalculator.isNearAttraction(visitedLocation2, attraction2))
+                .thenReturn(true);
+
+        // WHEN
+        rewardsService.calculateRewards("userTest");
+
+        // THEN
+        assertThat(user.getUserRewards().size()).isEqualTo(2);
+        assertThat(user.getUserRewards().get(0).getRewardPoints())
+                .isEqualTo(100);
+        assertThat(user.getUserRewards().get(1).getRewardPoints())
+                .isEqualTo(80);
+    }
+
+    @Test
+    @Tag("CalculateRewards")
+    @DisplayName("Calculate Rewards - Error - isNearAttraction false")
+    public void givenUserWithVisitedLocation_whencalculateRewardsWithFarAttractionLocation_thenReturnUserRewardsNotAdded() {
+        // GIVEN
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
+                visitedLocationsList, userRewardsList);
+
+        when(microserviceUserProxy.getUserRewardsDto("userTest"))
+                .thenReturn(user);
+
+        // set attraction too far (user in Paris, attraction Marseille)
+        attractionsDtoList = new ArrayList<>();
+        attractionDto = new AttractionDto("Vieux-Port de Marseille",
+                new Location(43.295364, 5.37439), "Marseille", "France",
+                UUID.randomUUID());
+        attractionsDtoList.add(attractionDto);
+        when(microserviceGpsProxy.getAllAttractions())
+                .thenReturn(attractionsDtoList);
+
+        assertThat(user.getUserRewards().size()).isEqualTo(0);
+        // WHEN
+        rewardsService.calculateRewards("userTest");
+
+        // THEN
+        assertThat(user.getUserRewards().size()).isEqualTo(0);// unchanged
     }
 
     @Test

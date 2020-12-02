@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.tourGuide.rewards.domain.dto.UserRewardsDto;
 import com.tourGuide.rewards.services.IRewardsService;
 
 @RestController
@@ -22,6 +23,12 @@ public class RewardsController {
             @PathVariable("attractionId") final UUID attractionId,
             @PathVariable("userId") final UUID userId) {
         return rewardsService.getAttractionRewards(attractionId, userId);
+    }
+
+    @GetMapping("/calculateRewards/{userName}")
+    public UserRewardsDto calculateRewards(
+            @PathVariable("userName") final String userName) {
+        return rewardsService.calculateRewards(userName);
     }
 
 }
