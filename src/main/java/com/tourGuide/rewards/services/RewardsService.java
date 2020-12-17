@@ -1,6 +1,8 @@
 package com.tourGuide.rewards.services;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,7 +12,6 @@ import com.tourGuide.rewards.domain.VisitedLocation;
 import com.tourGuide.rewards.domain.dto.AttractionDto;
 import com.tourGuide.rewards.domain.dto.UserRewardsDto;
 import com.tourGuide.rewards.proxies.MicroserviceGpsProxy;
-import com.tourGuide.rewards.proxies.MicroserviceUserProxy;
 import com.tourGuide.rewards.util.DistanceCalculator;
 
 import rewardCentral.RewardCentral;
@@ -23,9 +24,6 @@ public class RewardsService implements IRewardsService {
 
     @Autowired
     private MicroserviceGpsProxy microserviceGpsProxy;
-
-    @Autowired
-    private MicroserviceUserProxy microserviceUserProxy;
 
     @Autowired
     private DistanceCalculator distanceCalculator;
@@ -46,34 +44,35 @@ public class RewardsService implements IRewardsService {
      * Method used to update user's rewards points, adding rewards if attraction
      * was visited.
      *
-     * @param userName
+     * @param UserRewardsDto user
+     * @return user Rewards list
      */
-    public UserRewardsDto calculateRewards(final String userName) {
+    public List<UserReward> calculateRewards(final UserRewardsDto user) {
+        CopyOnWriteArrayList<AttractionDto> allAttractionsDtoCopy = new CopyOnWriteArrayList<>();
+        allAttractionsDtoCopy.addAll(microserviceGpsProxy.getAllAttractions());
 
-        UserRewardsDto user = microserviceUserProxy.getUserRewardsDto(userName);
+        CopyOnWriteArrayList<VisitedLocation> allUserLocations = new CopyOnWriteArrayList<>();
+        allUserLocations.addAll(user.getVisitedLocations());
 
-        for (VisitedLocation visitedLocation : user.getVisitedLocations()) {
-
-            for (AttractionDto attractionDto : microserviceGpsProxy
-                    .getAllAttractions()) {
-
-                if (user.getUserRewards().stream()
-                        .filter(r -> r.attraction.getAttractionName()
-                                .equals(attractionDto.getAttractionName()))
-                        .count() == 0) {
-
-                    if (distanceCalculator.isNearAttraction(visitedLocation,
-                            attractionDto)) {
-                        user.addUserReward(
-                                new UserReward(visitedLocation, attractionDto,
+        allUserLocations.stream()
+                .forEach(visitedLocation -> allAttractionsDtoCopy.stream()
+                        .filter(attraction -> distanceCalculator
+                                .isNearAttraction(visitedLocation, attraction))
+                        .forEach(attraction -> {
+                            if (user.getUserRewards().stream()
+                                    .filter(r -> r.attraction
+                                            .getAttractionName()
+                                            .equals(attraction
+                                                    .getAttractionName()))
+                                    .count() == 0) {
+                                user.addUserReward(new UserReward(
+                                        visitedLocation, attraction,
                                         getAttractionRewards(
-                                                attractionDto.getAttractionId(),
+                                                attraction.getAttractionId(),
                                                 user.getUserId())));
-                    }
-                }
-            }
-        }
-        return user;
+                            }
+                        }));
+        return user.getUserRewards();
     }
 
 }
