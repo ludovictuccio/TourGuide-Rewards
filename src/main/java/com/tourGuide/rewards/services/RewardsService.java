@@ -29,11 +29,7 @@ public class RewardsService implements IRewardsService {
     private DistanceCalculator distanceCalculator;
 
     /**
-     * Method used to return the integer of attraction rewards for an user.
-     *
-     * @param UUID attractionId
-     * @param UUID userId
-     * @return int attraction rewards
+     * {@inheritDoc}
      */
     public int getAttractionRewards(final UUID attractionId,
             final UUID userId) {
@@ -41,11 +37,7 @@ public class RewardsService implements IRewardsService {
     }
 
     /**
-     * Method used to update user's rewards points, adding rewards if attraction
-     * was visited.
-     *
-     * @param UserRewardsDto user
-     * @return user Rewards list
+     * {@inheritDoc}
      */
     public List<UserReward> calculateRewards(final UserRewardsDto user) {
         CopyOnWriteArrayList<AttractionDto> allAttractionsDtoCopy = new CopyOnWriteArrayList<>();

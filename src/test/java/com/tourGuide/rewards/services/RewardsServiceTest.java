@@ -22,7 +22,6 @@ import com.tourGuide.rewards.domain.VisitedLocation;
 import com.tourGuide.rewards.domain.dto.AttractionDto;
 import com.tourGuide.rewards.domain.dto.UserRewardsDto;
 import com.tourGuide.rewards.proxies.MicroserviceGpsProxy;
-import com.tourGuide.rewards.proxies.MicroserviceUserProxy;
 import com.tourGuide.rewards.util.DistanceCalculator;
 
 import rewardCentral.RewardCentral;
@@ -41,9 +40,6 @@ public class RewardsServiceTest {
 
     @MockBean
     private MicroserviceGpsProxy microserviceGpsProxy;
-
-    @MockBean
-    private MicroserviceUserProxy microserviceUserProxy;
 
     private List<VisitedLocation> visitedLocationsList;
     private List<UserReward> userRewardsList;
@@ -82,11 +78,9 @@ public class RewardsServiceTest {
     @DisplayName("Calculate Rewards - Ok")
     public void givenUserWithVisitedLocation_whencalculateRewardsWithAttractionInTheSameLocation_thenReturnUserRewardsAdded() {
         // GIVEN
-        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(),
                 visitedLocationsList, userRewardsList);
 
-        when(microserviceUserProxy.getUserRewardsDto("userTest"))
-                .thenReturn(user);
         when(microserviceGpsProxy.getAllAttractions())
                 .thenReturn(attractionsDtoList);
         when(distanceCalculator.isNearAttraction(visitedLocation,
@@ -94,56 +88,18 @@ public class RewardsServiceTest {
 
         assertThat(user.getUserRewards().size()).isEqualTo(0);
         // WHEN
-        rewardsService.calculateRewards("userTest");
+        rewardsService.calculateRewards(user);
 
         // THEN
         assertThat(user.getUserRewards().size()).isEqualTo(1);
     }
 
-//    @Test
-//    @Tag("CalculateRewards")
-//    @DisplayName("Calculate Rewards - Error - Same attractions")
-//    public void aaaa() {
-//        // GIVEN
-//        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
-//                visitedLocationsList, userRewardsList);
-//
-//        VisitedLocation visitedLocation = new VisitedLocation(user.getUserId(),
-//                new Location(48.858331, 2.294481), new Date());
-//        AttractionDto attraction = new AttractionDto("Tour Eiffel",
-//                new Location(48.858331, 2.294481), "Paris", "France",
-//                UUID.randomUUID());
-//
-//        UserReward userReward = new UserReward(visitedLocation, attraction);
-//        userReward.setRewardPoints(100);
-//        user.addUserReward(userReward);
-//
-//        UserReward userReward2 = new UserReward(visitedLocation, attraction);
-//        userReward2.setRewardPoints(100);
-//        user.addUserReward(userReward2);
-//
-//        when(microserviceUserProxy.getUserRewardsDto("userTest"))
-//                .thenReturn(user);
-////        when(microserviceGpsProxy.getAllAttractions())
-////                .thenReturn(attractionsDtoList);
-//        when(distanceCalculator.isNearAttraction(visitedLocation, attraction))
-//                .thenReturn(true);
-//
-//        // WHEN
-//        rewardsService.calculateRewards("userTest");
-//
-//        // THEN
-//        assertThat(user.getUserRewards().size()).isEqualTo(1);
-//        assertThat(user.getUserRewards().get(0).getRewardPoints())
-//                .isEqualTo(100);
-//    }
-
     @Test
     @Tag("CalculateRewards")
     @DisplayName("Calculate Rewards - Ok - Differents attractions")
-    public void aaaaa() {
+    public void givenTwoVisitedLocationsOnDifferentLocationAttractions_whenCalculate_thenReturnTwoRewards() {
         // GIVEN
-        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(),
                 visitedLocationsList, userRewardsList);
 
         VisitedLocation visitedLocation = new VisitedLocation(user.getUserId(),
@@ -166,15 +122,13 @@ public class RewardsServiceTest {
         userReward2.setRewardPoints(80);
         user.addUserReward(userReward2);
 
-        when(microserviceUserProxy.getUserRewardsDto("userTest"))
-                .thenReturn(user);
         when(distanceCalculator.isNearAttraction(visitedLocation, attraction))
                 .thenReturn(true);
         when(distanceCalculator.isNearAttraction(visitedLocation2, attraction2))
                 .thenReturn(true);
 
         // WHEN
-        rewardsService.calculateRewards("userTest");
+        rewardsService.calculateRewards(user);
 
         // THEN
         assertThat(user.getUserRewards().size()).isEqualTo(2);
@@ -189,11 +143,8 @@ public class RewardsServiceTest {
     @DisplayName("Calculate Rewards - Error - isNearAttraction false")
     public void givenUserWithVisitedLocation_whencalculateRewardsWithFarAttractionLocation_thenReturnUserRewardsNotAdded() {
         // GIVEN
-        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(), "userTest",
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(),
                 visitedLocationsList, userRewardsList);
-
-        when(microserviceUserProxy.getUserRewardsDto("userTest"))
-                .thenReturn(user);
 
         // set attraction too far (user in Paris, attraction Marseille)
         attractionsDtoList = new ArrayList<>();
@@ -206,7 +157,7 @@ public class RewardsServiceTest {
 
         assertThat(user.getUserRewards().size()).isEqualTo(0);
         // WHEN
-        rewardsService.calculateRewards("userTest");
+        rewardsService.calculateRewards(user);
 
         // THEN
         assertThat(user.getUserRewards().size()).isEqualTo(0);// unchanged
