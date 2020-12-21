@@ -96,6 +96,61 @@ public class RewardsServiceTest {
 
     @Test
     @Tag("CalculateRewards")
+    @DisplayName("Calculate Rewards - Ok - Same attraction")
+    public void givenRewards_whenCalculateWithSameAttraction_thenReturnRewardsSizeNoChanged() {
+        // GIVEN
+        userRewardsList
+                .add(new UserReward(visitedLocation, attractionDto, 100));
+
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(),
+                visitedLocationsList, userRewardsList);
+
+        when(microserviceGpsProxy.getAllAttractions())
+                .thenReturn(attractionsDtoList);
+        when(distanceCalculator.isNearAttraction(visitedLocation,
+                attractionDto)).thenReturn(true);
+
+        assertThat(user.getUserRewards().size()).isEqualTo(1);
+        // WHEN
+        rewardsService.calculateRewards(user);
+
+        // THEN
+        assertThat(user.getUserRewards().size()).isEqualTo(1);// no changed
+    }
+
+    @Test
+    @Tag("CalculateRewards")
+    @DisplayName("Calculate Rewards - Error- Rewards with different attraction")
+    public void givenUserWithRewards_whenCalculateWithOtherAttraction_thenReturnRewardsAdded() {
+        // GIVEN
+        UserRewardsDto user = new UserRewardsDto(UUID.randomUUID(),
+                visitedLocationsList, userRewardsList);
+
+        VisitedLocation existingVisitedLocation = new VisitedLocation(
+                user.getUserId(), new Location(28.858331, 2.294481),
+                new Date());
+        AttractionDto existingAttractionDto = new AttractionDto(
+                "Attraction name", existingVisitedLocation.getLocation(),
+                "City", "France", UUID.randomUUID());
+
+        userRewardsList.add(new UserReward(existingVisitedLocation,
+                existingAttractionDto, 100));
+
+        when(microserviceGpsProxy.getAllAttractions())
+                .thenReturn(attractionsDtoList);
+        when(distanceCalculator.isNearAttraction(visitedLocation,
+                attractionDto)).thenReturn(true);
+
+        assertThat(user.getUserRewards().size()).isEqualTo(1);
+        // WHEN
+        rewardsService.calculateRewards(user);
+
+        // THEN
+        assertThat(user.getUserRewards().size()).isEqualTo(2);
+    }
+
+    @Test
+    @Tag("CalculateRewards")
     @DisplayName("Calculate Rewards - Ok - Differents attractions")
     public void givenTwoVisitedLocationsOnDifferentLocationAttractions_whenCalculate_thenReturnTwoRewards() {
         // GIVEN
@@ -114,11 +169,13 @@ public class RewardsServiceTest {
                 new Location(43.295364, 5.37439), "Marseille", "France",
                 UUID.randomUUID());
 
-        UserReward userReward = new UserReward(visitedLocation, attraction);
+        UserReward userReward = new UserReward(visitedLocation, attraction,
+                100);
         userReward.setRewardPoints(100);
         user.addUserReward(userReward);
 
-        UserReward userReward2 = new UserReward(visitedLocation2, attraction2);
+        UserReward userReward2 = new UserReward(visitedLocation2, attraction2,
+                100);
         userReward2.setRewardPoints(80);
         user.addUserReward(userReward2);
 
