@@ -1,0 +1,22 @@
+com/tourGuide/rewards/proxies/MicroserviceGpsProxy.java
+ com.tourGuide.rewards.proxies.MicroserviceGpsProxy
+com/tourGuide/rewards/domain/dto/UserRewardsDto.java
+ com.tourGuide.rewards.domain.dto.UserRewardsDto
+com/tourGuide/rewards/domain/UserReward.java
+ com.tourGuide.rewards.domain.UserReward
+com/tourGuide/rewards/domain/Location.java
+ com.tourGuide.rewards.domain.Location
+com/tourGuide/rewards/controllers/RewardsController.java
+ com.tourGuide.rewards.controllers.RewardsController
+com/tourGuide/rewards/domain/dto/AttractionDto.java
+ com.tourGuide.rewards.domain.dto.AttractionDto
+com/tourGuide/rewards/services/RewardsService.java
+ com.tourGuide.rewards.services.RewardsService
+com/tourGuide/rewards/services/IRewardsService.java
+ com.tourGuide.rewards.services.IRewardsService
+com/tourGuide/rewards/domain/VisitedLocation.java
+ com.tourGuide.rewards.domain.VisitedLocation
+com/tourGuide/rewards/util/DistanceCalculator.java
+ com.tourGuide.rewards.util.DistanceCalculator
+com/tourGuide/rewards/RewardsApplication.java
+ com.tourGuide.rewards.RewardsApplication
