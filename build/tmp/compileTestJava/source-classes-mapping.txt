@@ -1,0 +1,8 @@
+com/tourGuide/rewards/RewardsApplicationTests.java
+ com.tourGuide.rewards.RewardsApplicationTests
+com/tourGuide/rewards/controllers/RewardsControllerIT.java
+ com.tourGuide.rewards.controllers.RewardsControllerIT
+com/tourGuide/rewards/util/DistanceCalculatorTest.java
+ com.tourGuide.rewards.util.DistanceCalculatorTest
+com/tourGuide/rewards/services/RewardsServiceTest.java
+ com.tourGuide.rewards.services.RewardsServiceTest

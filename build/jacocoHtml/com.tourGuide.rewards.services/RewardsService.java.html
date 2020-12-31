@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="fr"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RewardsService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">rewards</a> &gt; <a href="index.source.html" class="el_package">com.tourGuide.rewards.services</a> &gt; <span class="el_source">RewardsService.java</span></div><h1>RewardsService.java</h1><pre class="source lang-java linenums">package com.tourGuide.rewards.services;
+
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.tourGuide.rewards.domain.UserReward;
+import com.tourGuide.rewards.domain.VisitedLocation;
+import com.tourGuide.rewards.domain.dto.AttractionDto;
+import com.tourGuide.rewards.domain.dto.UserRewardsDto;
+import com.tourGuide.rewards.proxies.MicroserviceGpsProxy;
+import com.tourGuide.rewards.util.DistanceCalculator;
+
+import rewardCentral.RewardCentral;
+
+@Service
+<span class="fc" id="L20">public class RewardsService implements IRewardsService {</span>
+
+    @Autowired
+    private RewardCentral rewardCentral;
+
+    @Autowired
+    private MicroserviceGpsProxy microserviceGpsProxy;
+
+    @Autowired
+    private DistanceCalculator distanceCalculator;
+
+    /**
+     * {@inheritDoc}
+     */
+    public int getAttractionRewards(final UUID attractionId,
+            final UUID userId) {
+<span class="fc" id="L36">        return rewardCentral.getAttractionRewardPoints(attractionId, userId);</span>
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    public List&lt;UserReward&gt; calculateRewards(final UserRewardsDto user) {
+<span class="fc" id="L43">        CopyOnWriteArrayList&lt;AttractionDto&gt; allAttractionsDtoCopy = new CopyOnWriteArrayList&lt;&gt;();</span>
+<span class="fc" id="L44">        allAttractionsDtoCopy.addAll(microserviceGpsProxy.getAllAttractions());</span>
+
+<span class="fc" id="L46">        CopyOnWriteArrayList&lt;VisitedLocation&gt; allUserLocations = new CopyOnWriteArrayList&lt;&gt;();</span>
+<span class="fc" id="L47">        allUserLocations.addAll(user.getVisitedLocations());</span>
+
+<span class="fc" id="L49">        allUserLocations.stream()</span>
+<span class="fc" id="L50">                .forEach(visitedLocation -&gt; allAttractionsDtoCopy.stream()</span>
+<span class="fc" id="L51">                        .filter(attraction -&gt; distanceCalculator</span>
+<span class="fc" id="L52">                                .isNearAttraction(visitedLocation, attraction))</span>
+<span class="fc" id="L53">                        .forEach(attraction -&gt; {</span>
+<span class="fc" id="L54">                            if (user.getUserRewards().stream()</span>
+<span class="fc" id="L55">                                    .filter(r -&gt; r.attraction</span>
+<span class="fc" id="L56">                                            .getAttractionName()</span>
+<span class="fc" id="L57">                                            .equals(attraction</span>
+<span class="fc" id="L58">                                                    .getAttractionName()))</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">                                    .count() == 0) {</span>
+<span class="fc" id="L60">                                user.addUserReward(new UserReward(</span>
+                                        visitedLocation, attraction,
+<span class="fc" id="L62">                                        getAttractionRewards(</span>
+<span class="fc" id="L63">                                                attraction.getAttractionId(),</span>
+<span class="fc" id="L64">                                                user.getUserId())));</span>
+                            }
+<span class="fc" id="L66">                        }));</span>
+<span class="fc" id="L67">        return user.getUserRewards();</span>
+    }
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
